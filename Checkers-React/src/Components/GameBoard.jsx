@@ -35,46 +35,41 @@ export default class GameBoard extends Component {
   handlePieceClick = (e) => {
     let rowIndex = parseInt(e.target.attributes["data-row"].nodeValue);
     let cellIndex = parseInt(e.target.attributes["data-cell"].nodeValue);
+
     if (
       this.state.board[rowIndex][cellIndex].indexOf(this.state.activePlayer) >
       -1
     ) {
       //this is triggered if the piece that was clicked on is one of the player's own pieces, it activates it and highlights possible moves
-      this.setState({
-        board: this.state.board.map((row) =>
-          row.map((cell) => cell.replace("a", ""))
-        ),
-      });
+      //this is triggered if the piece that was clicked on is one of the player's own pieces, it activates it and highlights possible moves
+      // eslint-disable-next-line
+      this.state.board = this.state.board.map((row) =>
+        row.map((cell) => cell.replace("a", ""))
+      );
 
       //un-activate any previously activated pieces
-      const newBoard = [...this.state.board];
-      newBoard[rowIndex][cellIndex] = "a" + newBoard[rowIndex][cellIndex];
-      this.setState({
-        board: newBoard,
-      });
+      // eslint-disable-next-line
+      this.state.board[rowIndex][cellIndex] =
+        "a" + this.state.board[rowIndex][cellIndex];
       this.highlightPossibleMoves(rowIndex, cellIndex);
     } else if (this.state.board[rowIndex][cellIndex].indexOf("h") > -1) {
       //this is activated if the piece clicked is a highlighted square, it moves the active piece to that spot.
-      const newBoard = this.executeMove(
+      // eslint-disable-next-line
+      this.state.board = this.executeMove(
         rowIndex,
         cellIndex,
         this.state.board,
         this.state.activePlayer
       );
-      this.setState({
-        board: newBoard,
-      });
-
       //is the game over? if not, swap active player
+      this.setState(this.state);
       if (this.winDetection(this.state.board, this.state.activePlayer)) {
         console.log(this.state.activePlayer + " won the game!");
       } else {
-        const activePlayer = this.state.activePlayer === "r" ? "b" : "r";
-        this.setState({ activePlayer: activePlayer });
-        if (activePlayer === "b") {
-          setTimeout(() => {
-            this.ai();
-          }, 50);
+        // eslint-disable-next-line
+        this.state.activePlayer = this.state.activePlayer === "r" ? "b" : "r";
+        if (this.state.activePlayer === "b") {
+          setTimeout(() => this.ai(), 50);
         }
       }
     }
