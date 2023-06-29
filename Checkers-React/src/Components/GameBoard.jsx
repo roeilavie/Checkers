@@ -1,57 +1,86 @@
-import React, { useState } from "react";
+import React, { Component } from "react";
 import Row from "./Row";
 import Statistics from "./Statistics";
 import Popup from "./Popup";
 
-export default function GameBoard() {
-  const [board, setBoard] = useState([
-    ["b", "-", "b", "-", "b", "-", "b", "-"],
-    ["-", "b", "-", "b", "-", "b", "-", "b"],
-    ["b", "-", "b", "-", "b", "-", "b", "-"],
-    ["-", "-", "-", "-", "-", "-", "-", "-"],
-    ["-", "-", "-", "-", "-", "-", "-", "-"],
-    ["-", "r", "-", "r", "-", "r", "-", "r"],
-    ["r", "-", "r", "-", "r", "-", "r", "-"],
-    ["-", "r", "-", "r", "-", "r", "-", "r"],
-  ]);
-  const [activePlayer, setActivePlayer] = useState("r");
-  let aiDepthCutoff = 3;
-  let count = 0;
-  const [popShown, setPopShown] = useState(false);
+export default class GameBoard extends Component {
+  constructor() {
+    super();
+    this.state = {
+      board: [
+        ["b", "-", "b", "-", "b", "-", "b", "-"],
+        ["-", "b", "-", "b", "-", "b", "-", "b"],
+        ["b", "-", "b", "-", "b", "-", "b", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "r", "-", "r", "-", "r", "-", "r"],
+        ["r", "-", "r", "-", "r", "-", "r", "-"],
+        ["-", "r", "-", "r", "-", "r", "-", "r"],
+      ],
+      activePlayer: "r",
+      aiDepthCutoff: 3,
+      count: 0,
+      popShown: false,
+    };
+  }
 
-  const handlePieceClick = (e) => {
+  aboutPopOpen = (e) => {
+    this.setState({ popShown: true });
+  };
+
+  aboutPopClose = (e) => {
+    this.setState({ popShown: false });
+  };
+
+  handlePieceClick = (e) => {
     let rowIndex = parseInt(e.target.attributes["data-row"].nodeValue);
     let cellIndex = parseInt(e.target.attributes["data-cell"].nodeValue);
-    let newBoard = [...board];
-    let resetActivePlayer = activePlayer;
-
-    if (board[rowIndex][cellIndex].indexOf(activePlayer) > -1) {
+    if (
+      this.state.board[rowIndex][cellIndex].indexOf(this.state.activePlayer) >
+      -1
+    ) {
       //this is triggered if the piece that was clicked on is one of the player's own pieces, it activates it and highlights possible moves
-      newBoard = board.map((row) => row.map((cell) => cell.replace("a", "")));
+      this.setState({
+        board: this.state.board.map((row) =>
+          row.map((cell) => cell.replace("a", ""))
+        ),
+      });
+
       //un-activate any previously activated pieces
+      const newBoard = [...this.state.board];
       newBoard[rowIndex][cellIndex] = "a" + newBoard[rowIndex][cellIndex];
-      setBoard(newBoard);
-      highlightPossibleMoves(rowIndex, cellIndex);
-    } else if (board[rowIndex][cellIndex].indexOf("h") > -1) {
+      this.setState({
+        board: newBoard,
+      });
+      this.highlightPossibleMoves(rowIndex, cellIndex);
+    } else if (this.state.board[rowIndex][cellIndex].indexOf("h") > -1) {
       //this is activated if the piece clicked is a highlighted square, it moves the active piece to that spot.
-      newBoard = executeMove(rowIndex, cellIndex, board, activePlayer);
-      setBoard(newBoard);
+      const newBoard = this.executeMove(
+        rowIndex,
+        cellIndex,
+        this.state.board,
+        this.state.activePlayer
+      );
+      this.setState({
+        board: newBoard,
+      });
+
       //is the game over? if not, swap active player
-      if (winDetection(board, activePlayer)) {
-        console.log(activePlayer + " won the game!");
+      if (this.winDetection(this.state.board, this.state.activePlayer)) {
+        console.log(this.state.activePlayer + " won the game!");
       } else {
-        resetActivePlayer = activePlayer === "r" ? "b" : "r";
-        if (resetActivePlayer === "b") {
+        const activePlayer = this.state.activePlayer === "r" ? "b" : "r";
+        this.setState({ activePlayer: activePlayer });
+        if (activePlayer === "b") {
           setTimeout(() => {
-            ai();
+            this.ai();
           }, 50);
         }
       }
     }
-    setActivePlayer(resetActivePlayer);
   };
 
-  const executeMove = (rowIndex, cellIndex, board, activePlayer) => {
+  executeMove = (rowIndex, cellIndex, board, activePlayer) => {
     let activePiece;
     for (let i = 0; i < board.length; i++) {
       //for each row
@@ -61,7 +90,6 @@ export default function GameBoard() {
         }
       }
     }
-
     //make any jump deletions
     let deletions = board[rowIndex][cellIndex].match(/d\d\d/g);
     if (deletions !== undefined && deletions !== null && deletions.length > 0) {
@@ -75,9 +103,11 @@ export default function GameBoard() {
       row.map((cell) => cell.replace(activePiece, "-"))
     );
     //unhighlight
-    board = board.map((row) =>
-      row.map((cell) => cell.replace("h", "-").replace(/d\d\d/g, "").trim())
-    );
+    board = board.map(function (row) {
+      return row.map(function (cell) {
+        return cell.replace("h", "-").replace(/d\d\d/g, "").trim();
+      });
+    });
     //place active piece, now unactive, in it's new place
     board[rowIndex][cellIndex] = activePiece.replace("a", "");
     if (
@@ -89,16 +119,17 @@ export default function GameBoard() {
     return board;
   };
 
-  const highlightPossibleMoves = (rowIndex, cellIndex) => {
+  highlightPossibleMoves = (rowIndex, cellIndex) => {
     //unhighlight any previously highlighted cells
-    const newBoard = board.map((row) =>
+    const newBoard = this.state.board.map((row) =>
       row.map((cell) => cell.replace("h", "-").replace(/d\d\d/g, "").trim())
     );
-    let possibleMoves = findAllPossibleMoves(
+
+    let possibleMoves = this.findAllPossibleMoves(
       rowIndex,
       cellIndex,
       newBoard,
-      activePlayer
+      this.state.activePlayer
     );
 
     //actually highlight the possible moves on the board
@@ -115,10 +146,11 @@ export default function GameBoard() {
       newBoard[possibleMoves[j].targetRow][possibleMoves[j].targetCell] =
         buildHighlightTag;
     }
-    setBoard(newBoard);
+
+    this.setState({ board: newBoard });
   };
 
-  const findAllPossibleMoves = (rowIndex, cellIndex, board, activePlayer) => {
+  findAllPossibleMoves = (rowIndex, cellIndex, board, activePlayer) => {
     let possibleMoves = [];
     let directionOfMotion = [];
     let leftOrRight = [1, -1];
@@ -170,7 +202,7 @@ export default function GameBoard() {
     }
 
     //get jumps
-    let jumps = findAllJumps(
+    let jumps = this.findAllJumps(
       rowIndex,
       cellIndex,
       board,
@@ -188,7 +220,7 @@ export default function GameBoard() {
     return possibleMoves;
   };
 
-  const findAllJumps = (
+  findAllJumps = (
     sourceRowIndex,
     sourceCellIndex,
     board,
@@ -229,7 +261,9 @@ export default function GameBoard() {
         ) {
           if (
             possibleJumps
-              .map((move) => String(move.targetRow) + String(move.targetCell))
+              .map(function (move) {
+                return String(move.targetRow) + String(move.targetCell);
+              })
               .indexOf(
                 String(sourceRowIndex + directions[k] * 2) +
                   String(sourceCellIndex + leftOrRight[l] * 2)
@@ -246,7 +280,6 @@ export default function GameBoard() {
                 },
               ],
             };
-
             for (let i = 0; i < wouldDelete.length; i++) {
               tempJumpObject.wouldDelete.push(wouldDelete[i]);
             }
@@ -261,7 +294,7 @@ export default function GameBoard() {
     if (thisIterationDidSomething) {
       for (let i = 0; i < possibleJumps.length; i++) {
         let coords = [possibleJumps[i].targetRow, possibleJumps[i].targetCell];
-        let children = findAllJumps(
+        let children = this.findAllJumps(
           coords[0],
           coords[1],
           board,
@@ -281,21 +314,23 @@ export default function GameBoard() {
     return possibleJumps;
   };
 
-  const reset = () => {
-    setBoard([
-      ["b", "-", "b", "-", "b", "-", "b", "-"],
-      ["-", "b", "-", "b", "-", "b", "-", "b"],
-      ["b", "-", "b", "-", "b", "-", "b", "-"],
-      ["-", "-", "-", "-", "-", "-", "-", "-"],
-      ["-", "-", "-", "-", "-", "-", "-", "-"],
-      ["-", "r", "-", "r", "-", "r", "-", "r"],
-      ["r", "-", "r", "-", "r", "-", "r", "-"],
-      ["-", "r", "-", "r", "-", "r", "-", "r"],
-    ]);
-    setActivePlayer("r");
+  reset = () => {
+    this.setState({
+      board: [
+        ["b", "-", "b", "-", "b", "-", "b", "-"],
+        ["-", "b", "-", "b", "-", "b", "-", "b"],
+        ["b", "-", "b", "-", "b", "-", "b", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "r", "-", "r", "-", "r", "-", "r"],
+        ["r", "-", "r", "-", "r", "-", "r", "-"],
+        ["-", "r", "-", "r", "-", "r", "-", "r"],
+      ],
+      activePlayer: "r",
+    });
   };
 
-  const winDetection = (board, activePlayer) => {
+  winDetection = (board, activePlayer) => {
     let enemyPlayer = activePlayer === "r" ? "b" : "r";
     let result = true;
     for (let i = 0; i < board.length; i++) {
@@ -308,25 +343,28 @@ export default function GameBoard() {
     return result;
   };
 
-  const cloneBoard = (board) => {
+  cloneBoard = (board) => {
     let output = [];
     for (let i = 0; i < board.length; i++) output.push(board[i].slice(0));
     return output;
   };
 
-  const ai = () => {
+  ai = () => {
     //prep a branching future prediction
-    count = 0;
+    this.count = 0;
     console.time("decisionTree");
-    let decisionTree = aiBranch(board, activePlayer, 1);
+    let decisionTree = this.aiBranch(
+      this.state.board,
+      this.state.activePlayer,
+      1
+    );
     console.timeEnd("decisionTree");
-    console.log(count);
-
+    console.log(this.count);
     //execute the most favorable move
     if (decisionTree.length > 0) {
       console.log(decisionTree[0]);
       setTimeout(() => {
-        handlePieceClick({
+        this.handlePieceClick({
           target: {
             attributes: {
               "data-row": {
@@ -338,8 +376,9 @@ export default function GameBoard() {
             },
           },
         });
+
         setTimeout(() => {
-          handlePieceClick({
+          this.handlePieceClick({
             target: {
               attributes: {
                 "data-row": {
@@ -358,20 +397,20 @@ export default function GameBoard() {
     }
   };
 
-  const aiBranch = (hypotheticalBoard, player, depth) => {
-    count++;
+  aiBranch = (hypotheticalBoard, activePlayer, depth) => {
+    this.count++;
     let output = [];
     for (let i = 0; i < hypotheticalBoard.length; i++) {
       for (let j = 0; j < hypotheticalBoard[i].length; j++) {
-        if (hypotheticalBoard[i][j].indexOf(player) > -1) {
-          let possibleMoves = findAllPossibleMoves(
+        if (hypotheticalBoard[i][j].indexOf(activePlayer) > -1) {
+          let possibleMoves = this.findAllPossibleMoves(
             i,
             j,
             hypotheticalBoard,
-            player
+            activePlayer
           );
           for (let k = 0; k < possibleMoves.length; k++) {
-            let tempBoard = cloneBoard(hypotheticalBoard);
+            let tempBoard = this.cloneBoard(hypotheticalBoard);
             tempBoard[i][j] = "a" + tempBoard[i][j];
 
             let buildHighlightTag = "h ";
@@ -388,20 +427,20 @@ export default function GameBoard() {
             let buildingObject = {
               piece: { targetRow: i, targetCell: j },
               move: possibleMoves[k],
-              board: executeMove(
+              board: this.executeMove(
                 possibleMoves[k].targetRow,
                 possibleMoves[k].targetCell,
                 tempBoard,
-                player
+                activePlayer
               ),
               terminal: null,
               children: [],
               score: 0,
-              activePlayer: player,
+              activePlayer: activePlayer,
               depth: depth,
             };
             //does that move win the game?
-            buildingObject.terminal = winDetection(
+            buildingObject.terminal = this.winDetection(
               buildingObject.board,
               activePlayer
             );
@@ -409,18 +448,18 @@ export default function GameBoard() {
             if (buildingObject.terminal) {
               //console.log('a terminal move was found');
               //if terminal, score is easy, just depends on who won
-              if (activePlayer === player) {
+              if (activePlayer === this.state.activePlayer) {
                 buildingObject.score = 100 - depth;
               } else {
                 buildingObject.score = -100 - depth;
               }
-            } else if (depth > aiDepthCutoff) {
+            } else if (depth > this.state.aiDepthCutoff) {
               //don't want to blow up the call stack boiiiiii
               buildingObject.score = 0;
             } else {
-              buildingObject.children = aiBranch(
+              buildingObject.children = this.aiBranch(
                 buildingObject.board,
-                player === "r" ? "b" : "r",
+                activePlayer === "r" ? "b" : "r",
                 depth + 1
               );
               //if not terminal, we want the best score from this route (or worst depending on who won)
@@ -432,27 +471,27 @@ export default function GameBoard() {
                 }
               }
 
-              scoreHolder.sort((a, b) => {
+              scoreHolder.sort(function (a, b) {
                 if (a > b) return -1;
                 if (a < b) return 1;
                 return 0;
               });
 
               if (scoreHolder.length > 0) {
-                if (player === activePlayer) {
+                if (activePlayer === this.state.activePlayer) {
                   buildingObject.score = scoreHolder[scoreHolder.length - 1];
                 } else {
                   buildingObject.score = scoreHolder[0];
                 }
               } else {
-                if (player === activePlayer) {
+                if (activePlayer === this.state.activePlayer) {
                   buildingObject.score = 100 - depth;
                 } else {
                   buildingObject.score = -100 - depth;
                 }
               }
             }
-            if (player === activePlayer) {
+            if (activePlayer === this.state.activePlayer) {
               for (let n = 0; n < buildingObject.move.wouldDelete.length; n++) {
                 if (
                   hypotheticalBoard[
@@ -502,7 +541,7 @@ export default function GameBoard() {
       }
     }
 
-    output = output.sort((a, b) => {
+    output = output.sort(function (a, b) {
       if (a.score > b.score) return -1;
       if (a.score < b.score) return 1;
       return 0;
@@ -510,31 +549,31 @@ export default function GameBoard() {
     return output;
   };
 
-  const aboutPopOpen = (e) => {
-    setPopShown(true);
-  };
-
-  const aboutPopClose = (e) => {
-    setPopShown(false);
-  };
-
-  return (
-    <div className="container">
-      <div className={"board " + activePlayer}>
-        {board.map((row, index) => (
-          <Row
-            rowArr={row}
-            handlePieceClick={handlePieceClick}
-            rowIndex={index}
-            key={index}
-          />
-        ))}
+  render() {
+    return (
+      <div className="container">
+        <div className={"board " + this.state.activePlayer}>
+          {this.state.board.map(function (row, index) {
+            return (
+              <Row
+                rowArr={row}
+                handlePieceClick={this.handlePieceClick}
+                rowIndex={index}
+                key={index}
+              />
+            );
+          }, this)}
+        </div>
+        <div className="clear"></div>
+        <button onClick={this.reset}>Reset</button>
+        <button onClick={this.aboutPopOpen}>About</button>
+        <Statistics board={this.state.board} />
+        <Popup
+          shown={this.state.popShown}
+          close={this.aboutPopClose}
+          copy="Hi Tomer, my average is higher than yours, just reminding you"
+        />
       </div>
-      <div className="clear"></div>
-      <button onClick={reset}>Reset</button>
-      <button onClick={aboutPopOpen}>About</button>
-      <Statistics board={board} />
-      <Popup shown={popShown} close={aboutPopClose} copy="Hey Tomer" />
-    </div>
-  );
+    );
+  }
 }
