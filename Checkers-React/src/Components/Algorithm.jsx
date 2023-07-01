@@ -63,7 +63,7 @@ export const minimax = (hypotheticalBoard, activePlayer, depth, maxDepth) => {
 
               if (scoreHolder.length > 0)
                 activePlayer === "b" ? buildingObject.score = scoreHolder[scoreHolder.length - 1] : buildingObject.score = scoreHolder[0]; 
-               else 
+              else 
                 activePlayer === "b" ? buildingObject.score = 100 - depth : buildingObject.score = -100 - depth;
             }
 
@@ -98,7 +98,7 @@ export const minimax = (hypotheticalBoard, activePlayer, depth, maxDepth) => {
       }
     }
 
-    output = output.sort(function (a, b) {
+    output = output.sort((a, b) => {
       if (a.score > b.score) return -1;
       if (a.score < b.score) return 1;
       return 0;
