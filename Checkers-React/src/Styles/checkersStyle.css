@@ -9,6 +9,7 @@
 h1 {
   font-size: 50px;
   margin: 0;
+  text-align: center;
 }
 
 .row {
@@ -57,6 +58,37 @@ h1 {
   pointer-events: none;
 }
 
+@media screen and (max-width: 600px) {
+  .row {
+    height: 40px;
+  }
+
+  .cell {
+    height: 40px;
+    width: 40px;
+    display: inline-block;
+  }
+
+  .cell .gamePiece {
+    width: 30px;
+    height: 30px;
+    border-radius: 30px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .cell .gamePiece:after {
+    content: ' ';
+    position: absolute;
+    right: 0;
+    top: -5px;
+    height: 26px;
+    width: 26px;
+    border-radius: 30px;
+    pointer-events: none;
+  }
+}
+
 .cell.cell-b .gamePiece {
   background-color: black;
 }
@@ -89,7 +121,6 @@ h1 {
 .board {
   border: 5px solid black;
   border-radius: 5px;
-  float: left;
   transition-duration: 0.8s;
   transition-property: transform;
 }
