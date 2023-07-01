@@ -32,11 +32,11 @@ export const getPossibleMoves = (rowIndex, colIndex, board, activePlayer) => {
             board[newRow][newCol] === "-"
           ) {
             const index = `${newRow}${newCol}`;
-            const hasIndex = possibleMoves.some(move => `${move.targetRow}${move.targetCell}` === index);
+            const hasIndex = possibleMoves.some(move => `${move.targetRow}${move.targetCol}` === index);
             if (!hasIndex) {
               possibleMoves.push({
                 targetRow: newRow,
-                targetCell: newCol,
+                targetCol: newCol,
                 wouldDelete: [],
               });
             }
@@ -77,16 +77,16 @@ export const getPossibleMoves = (rowIndex, colIndex, board, activePlayer) => {
       
           if (isRow1Valid &&isCell1Valid &&isRow2Valid &&isCell2Valid &&isCell1Opponent &&isCell2Empty) {
             const jumpTarget = String(row2) + String(col2);
-            const isJumpTargetNew = !possibleJumps.some(move =>String(move.targetRow) + String(move.targetCell) === jumpTarget);
+            const isJumpTargetNew = !possibleJumps.some(move =>String(move.targetRow) + String(move.targetCol) === jumpTarget);
       
             if (isJumpTargetNew) {
               const tempJumpObject = {
                 targetRow: row2,
-                targetCell: col2,
+                targetCol: col2,
                 wouldDelete: [
                   {
                     targetRow: row1,
-                    targetCell: col1,
+                    targetCol: col1,
                   },
                   ...wouldDelete,
                 ],
@@ -102,7 +102,7 @@ export const getPossibleMoves = (rowIndex, colIndex, board, activePlayer) => {
 
     if (jumpFound) {
       for (let i = 0; i < possibleJumps.length; i++) {
-        let coords = [possibleJumps[i].targetRow, possibleJumps[i].targetCell];
+        let coords = [possibleJumps[i].targetRow, possibleJumps[i].targetCol];
         let children = getJumps(coords[0],coords[1],board,verticalDirection,possibleJumps,possibleJumps[i].wouldDelete,isKing,activePlayer);
         for (let j = 0; j < children.length; j++) {
           if (possibleJumps.indexOf(children[j]) < 0) {

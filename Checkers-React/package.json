@@ -11,6 +11,7 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
+  "homepage": "https://proj.ruppin.ac.il/cgroup1/test2/tar4/build/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

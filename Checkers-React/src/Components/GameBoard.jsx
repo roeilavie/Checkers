@@ -2,20 +2,23 @@ import React, { Component } from "react";
 import Row from "./Row";
 import { minimax } from "./Algorithm";
 import { getPossibleMoves, executeMove, isGoalState } from "./ServiceFunctions";
+
+const initialBoard = [
+  ["b", "-", "b", "-", "b", "-", "b", "-"],
+  ["-", "b", "-", "b", "-", "b", "-", "b"],
+  ["b", "-", "b", "-", "b", "-", "b", "-"],
+  ["-", "-", "-", "-", "-", "-", "-", "-"],
+  ["-", "-", "-", "-", "-", "-", "-", "-"],
+  ["-", "w", "-", "w", "-", "w", "-", "w"],
+  ["w", "-", "w", "-", "w", "-", "w", "-"],
+  ["-", "w", "-", "w", "-", "w", "-", "w"],
+];
+
 export default class GameBoard extends Component {
   constructor() {
     super();
     this.state = {
-      board: [
-        ["b", "-", "b", "-", "b", "-", "b", "-"],
-        ["-", "b", "-", "b", "-", "b", "-", "b"],
-        ["b", "-", "b", "-", "b", "-", "b", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "w", "-", "w", "-", "w", "-", "w"],
-        ["w", "-", "w", "-", "w", "-", "w", "-"],
-        ["-", "w", "-", "w", "-", "w", "-", "w"],
-      ],
+      board: initialBoard,
       activePlayer: "w",
       maxDepth: 3,
     };
@@ -38,8 +41,11 @@ export default class GameBoard extends Component {
       this.state.board = executeMove(rowIndex,colIndex,this.state.board,this.state.activePlayer);
       this.setState(this.state);
       if (isGoalState(this.state.board, this.state.activePlayer)) {
-        alert(this.state.activePlayer === 'b' ? "Computer won the game!" : "You won the game!");
-      } else {
+        setTimeout(() => {
+          alert(this.state.activePlayer === 'b' ? "Computer won the game!" : "You won the game!");
+        }, 2000);
+      }
+      else{
         // eslint-disable-next-line
         this.state.activePlayer = this.state.activePlayer === "w" ? "b" : "w";
         if (this.state.activePlayer === "b") {
@@ -60,10 +66,10 @@ export default class GameBoard extends Component {
         buildHighlightTag +=
           "d" +
           String(possibleMoves[j].wouldDelete[k].targetRow) +
-          String(possibleMoves[j].wouldDelete[k].targetCell) +
+          String(possibleMoves[j].wouldDelete[k].targetCol) +
           " ";
       }
-      newBoard[possibleMoves[j].targetRow][possibleMoves[j].targetCell] =
+      newBoard[possibleMoves[j].targetRow][possibleMoves[j].targetCol] =
         buildHighlightTag;
     }
 
@@ -72,22 +78,14 @@ export default class GameBoard extends Component {
 
   reset = () => {
     this.setState({
-      board: [
-        ["b", "-", "b", "-", "b", "-", "b", "-"],
-        ["-", "b", "-", "b", "-", "b", "-", "b"],
-        ["b", "-", "b", "-", "b", "-", "b", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "w", "-", "w", "-", "w", "-", "w"],
-        ["w", "-", "w", "-", "w", "-", "w", "-"],
-        ["-", "w", "-", "w", "-", "w", "-", "w"],
-      ],
+      board: initialBoard,
       activePlayer: "w",
     });
   };
 
   computer = () => {
     let miniMaxAlgo = minimax(this.state.board,this.state.activePlayer,1,this.state.maxDepth);
+    console.log(miniMaxAlgo);
     if (miniMaxAlgo.length > 0) {
       setTimeout(() => {
         this.handlePieceClick({
@@ -97,7 +95,7 @@ export default class GameBoard extends Component {
                 nodeValue: miniMaxAlgo[0].piece.targetRow,
               },
               "data-cell": {
-                nodeValue: miniMaxAlgo[0].piece.targetCell,
+                nodeValue: miniMaxAlgo[0].piece.targetCol,
               },
             },
           },
@@ -111,7 +109,7 @@ export default class GameBoard extends Component {
                   nodeValue: miniMaxAlgo[0].move.targetRow,
                 },
                 "data-cell": {
-                  nodeValue: miniMaxAlgo[0].move.targetCell,
+                  nodeValue: miniMaxAlgo[0].move.targetCol,
                 },
               },
             },

@@ -7,20 +7,22 @@ export const minimax = (hypotheticalBoard, activePlayer, depth, maxDepth) => {
 
         if (hypotheticalBoard[i][j].indexOf(activePlayer) > -1) {
           let possibleMoves = getPossibleMoves(i,j,hypotheticalBoard,activePlayer);
+
+          //For each move calculate the heuristic score
           for (let k = 0; k < possibleMoves.length; k++) {
             let tempBoard = cloneBoard(hypotheticalBoard);
             tempBoard[i][j] = "a" + tempBoard[i][j];
             let buildHighlightTag = "h ";
             for (let m = 0; m < possibleMoves[k].wouldDelete.length; m++) {
               buildHighlightTag += "d" +String(possibleMoves[k].wouldDelete[m].targetRow) + 
-              String(possibleMoves[k].wouldDelete[m].targetCell) + " ";
+              String(possibleMoves[k].wouldDelete[m].targetCol) + " ";
             }
-            tempBoard[possibleMoves[k].targetRow][possibleMoves[k].targetCell] = buildHighlightTag;
+            tempBoard[possibleMoves[k].targetRow][possibleMoves[k].targetCol] = buildHighlightTag;
 
-            let buildingObject = {
-              piece: { targetRow: i, targetCell: j },
+            let boardState = {
+              piece: { targetRow: i, targetCol: j },
               move: possibleMoves[k],
-              board: executeMove(possibleMoves[k].targetRow,possibleMoves[k].targetCell,tempBoard,activePlayer),
+              board: executeMove(possibleMoves[k].targetRow,possibleMoves[k].targetCol,tempBoard,activePlayer),
               terminal: null,
               children: [],
               score: 0,
@@ -28,82 +30,75 @@ export const minimax = (hypotheticalBoard, activePlayer, depth, maxDepth) => {
               depth: depth,
             };
 
-            //does that move win the game?
-            buildingObject.terminal = isGoalState(buildingObject.board,activePlayer);
-
-            if (buildingObject.terminal) {
-              //if terminal, score is easy, just depends on who won
+            //Does that move win the game?
+            boardState.terminal = isGoalState(boardState.board,activePlayer);
+            
+            if (boardState.terminal) {
               if (activePlayer === 'b') {
-                buildingObject.score = 100 - depth;
+                boardState.score = 100 - depth;
               } else {
-                buildingObject.score = -100 - depth;
+                boardState.score = -100 - depth;
               }
             }
 
             else if (depth > maxDepth) {
-              //don't want to blow up the call stack boiiiiii
-              buildingObject.score = 0;
+              boardState.score = 0;
             } 
             
             else {
-              buildingObject.children = minimax(buildingObject.board,activePlayer === "w" ? "b" : "w",depth + 1,maxDepth);
-              //if not terminal, we want the best score from this route (or worst depending on who won)
-              let scoreHolder = [];
-              for (let l = 0; l < buildingObject.children.length; l++) {
-                if (buildingObject.children[l].score !== "undefined") {
-                  scoreHolder.push(buildingObject.children[l].score);
-                }
-              }
-
-              scoreHolder.sort((a, b) => {
-                if (a > b) return -1;
-                if (a < b) return 1;
-                return 0;
-              });
-
-              if (scoreHolder.length > 0)
-                activePlayer === "b" ? buildingObject.score = scoreHolder[scoreHolder.length - 1] : buildingObject.score = scoreHolder[0]; 
+              boardState.children = minimax(boardState.board,activePlayer === "w" ? "b" : "w",depth + 1,maxDepth);
+              if (boardState.children.length > 0)
+                boardState.score = activePlayer === "b" ? boardState.children[1].score : boardState.children[0].score; 
               else 
-                activePlayer === "b" ? buildingObject.score = 100 - depth : buildingObject.score = -100 - depth;
+                activePlayer === "b" ? boardState.score = 100 - depth : boardState.score = -100 - depth;
             }
 
+            //Heuristic 
             if (activePlayer === "b") {
-              for (let n = 0; n < buildingObject.move.wouldDelete.length; n++) {
-                if (hypotheticalBoard[buildingObject.move.wouldDelete[n].targetRow][buildingObject.move.wouldDelete[n].targetCell].indexOf("k") > -1) 
-                  buildingObject.score += 25 - depth;
+              //Dispose a piece from the opponent pieces
+              for (let n = 0; n < boardState.move.wouldDelete.length; n++) {
+                //25 points for eating king piece
+                if (hypotheticalBoard[boardState.move.wouldDelete[n].targetRow][boardState.move.wouldDelete[n].targetCol].indexOf("k") > -1) 
+                  boardState.score += 25 - depth;
+                //10 points for eating regular piece
                 else 
-                  buildingObject.score += 10 - depth;
+                  boardState.score += 10 - depth;
               }
 
-              if ((JSON.stringify(hypotheticalBoard).match(/k/g) || []).length < (JSON.stringify(buildingObject.board).match(/k/g) || []).length) 
-                //new king made after this move
-                buildingObject.score += 15 - depth;
+              //15 points for advancing to king piece
+              if ((JSON.stringify(hypotheticalBoard).match(/k/g) || []).length < (JSON.stringify(boardState.board).match(/k/g) || []).length) 
+                boardState.score += 15 - depth;
               
-            } else {
-              for (let n = 0; n < buildingObject.move.wouldDelete.length; n++) {
-                if (hypotheticalBoard[buildingObject.move.wouldDelete[n].targetRow][buildingObject.move.wouldDelete[n].targetCell].indexOf("k") > -1) 
-                  buildingObject.score -= 25 - depth;
+            } 
+            else {
+              //Dispose a piece from the computer pieces
+              for (let n = 0; n < boardState.move.wouldDelete.length; n++) {
+                //-25 points for eating king piece
+                if (hypotheticalBoard[boardState.move.wouldDelete[n].targetRow][boardState.move.wouldDelete[n].targetCol].indexOf("k") > -1) 
+                  boardState.score -= 25 - depth;
+                //-10 points for eating regular piece
                 else 
-                  buildingObject.score -= 10 - depth;
+                  boardState.score -= 10 - depth;
                 
               }
-              if ((JSON.stringify(hypotheticalBoard).match(/k/g) || []).length < (JSON.stringify(buildingObject.board).match(/k/g) || []).length) 
-                //new king made after this move
-                buildingObject.score -= 15 - depth;
+              //-15 points for advancing to king piece against the computer
+              if ((JSON.stringify(hypotheticalBoard).match(/k/g) || []).length < (JSON.stringify(boardState.board).match(/k/g) || []).length) 
+                boardState.score -= 15 - depth;
             }
-            buildingObject.score += buildingObject.move.wouldDelete.length;
-            output.push(buildingObject);
+            boardState.score += boardState.move.wouldDelete.length;
+            output.push(boardState);
           }
         }
       }
     }
 
+    //Returning the objects with the highest and the lowest score
     output = output.sort((a, b) => {
       if (a.score > b.score) return -1;
       if (a.score < b.score) return 1;
       return 0;
     });
-    return output;
+    return [output[0], output[output.length - 1]];
   };
 
 

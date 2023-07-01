@@ -77,17 +77,13 @@ h1 {
 
 .cell.cell-ab .gamePiece,
 .cell.cell-aw .gamePiece {
-  background-color: #2983f3;
+  background-color: darkgray;
 }
 
 .cell.cell-ab.k .gamePiece:after,
 .cell.cell-aw.k .gamePiece:after {
-  background-color: #2983f3;
-  border: 1px solid #6495ED;
-}
-
-.cell.cell-h {
-  background-color: #2983f3 !important;
+  background-color: darkgray;
+  border: 1px solid gray;
 }
 
 .board {
